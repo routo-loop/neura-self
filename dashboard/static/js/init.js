@@ -1,4 +1,4 @@
-/* 
+/*
 
 # This file is part of NeuraSelf-UwU.
 # Copyright (c) 2025-Present Routo
@@ -7,14 +7,8 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with NeuraSelf-UwU. If not, see <https://www.gnu.org/licenses/>.
-
-
 
 */
-
 
 function initConfigSearch() {
     const input = document.getElementById('config-search');
@@ -36,12 +30,30 @@ function updateMobileControls() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function loadBossUiEnhancements() {
+    return new Promise((resolve) => {
+        if (window.__bossUiLoaded) return resolve();
+        const script = document.createElement('script');
+        script.src = '/static/js/boss_ui.js?v=1.0.0';
+        script.onload = () => {
+            window.__bossUiLoaded = true;
+            resolve();
+        };
+        script.onerror = () => {
+            console.warn('Boss UI enhancements failed to load; using standard configuration UI.');
+            resolve();
+        };
+        document.head.appendChild(script);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM Content Loaded - Initializing...");
     initDashCharts();
     window.fetchAccounts();
     if (typeof fetchProxies === 'function') fetchProxies();
     fetchAccountConfig();
+    await loadBossUiEnhancements();
     loadConfig();
     initDynamicTilt();
     initConfigSearch();

@@ -41,6 +41,7 @@ import copy
 import logging
 from rich.console import Console
 from rich.align import Align
+from utils.proxy_manager import load_accounts
 
 _log = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class NeuraBot(commands.Bot):
         self.accounts = []
         self.token = token
         self.channels = channels or []
-        self.channels = channels or []
+        
         self.proxy_url = proxy_url
         self.proxy_auth = proxy_auth
         self.proxy_label = proxy_label or "direct"
@@ -527,7 +528,7 @@ class NeuraBot(commands.Bot):
     def _load_config(self):
         try:
             if os.path.exists(self.config_file):
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
             else:
                 self.config = {}
@@ -541,7 +542,7 @@ class NeuraBot(commands.Bot):
                 
                 if os.path.exists(user_config_file):
                     try:
-                        with open(user_config_file, 'r') as f:
+                        with open(user_config_file, "r", encoding="utf-8") as f:
                             user_cfg = json.load(f)
                             self._deep_merge(self.config, user_cfg)
                         self.log("SYS", f"Using account-specific settings: settings_{uid}.json")
@@ -549,23 +550,44 @@ class NeuraBot(commands.Bot):
                         self.log("ERROR", f"Failed to load user settings_{uid}.json: {e}")
                 else:
                     try:
-                        with open(user_config_file, 'w') as f:
+                        with open(user_config_file, "w", encoding="utf-8") as f:
                             json.dump(self.config, f, indent=4)
                         self.log("SYS", f"Created personal settings file: settings_{uid}.json")
                     except Exception as e:
                         self.log("ERROR", f"Failed to create settings_{uid}.json: {e}")
             else:
                 self.log("SYS", "Using global settings: settings.json")
-
-            account_file = os.path.join(self.base_dir, 'config', 'accounts.json')
-            if os.path.exists(account_file):
-                try:
-                    with open(account_file, 'r') as f:
-                        self.accounts = json.load(f).get('accounts', [])
-                except:
-                    self.accounts = []
-            else:
+            # Override API keys bằng ENV nếu có
+            captcha = self.config.setdefault("security", {}).setdefault("captcha_solver", {})
+            
+            captcha["nopecha_api_key"] = os.getenv(
+                "NOPECHA_API_KEY",
+                captcha.get("nopecha_api_key", "")
+            )
+            
+            captcha["yescaptcha_api_key"] = os.getenv(
+                "YESCAPTCHA_API_KEY",
+                captcha.get("yescaptcha_api_key", "")
+            )
+            
+            captcha["anticaptcha_api_key"] = os.getenv(
+                "ANTICAPTCHA_API_KEY",
+                captcha.get("anticaptcha_api_key", "")
+            )
+            
+            # Override webhook nếu có
+            webhook = self.config.setdefault("security", {}).setdefault("webhook", {})
+            
+            webhook["url"] = os.getenv(
+                "DISCORD_WEBHOOK",
+                webhook.get("url", "")
+            )
+            
+            try:
+                self.accounts = load_accounts()
+            except Exception:
                 self.accounts = []
+            
 
             if self.accounts:
                 current_acc = None
@@ -592,7 +614,7 @@ class NeuraBot(commands.Bot):
             shortform_file = os.path.join(self.base_dir, 'config', 'shortform.json')
             if os.path.exists(shortform_file):
                 try:
-                    with open(shortform_file, 'r') as f:
+                    with open(shortform_file, "r", encoding="utf-8") as f:
                         self.shortforms = json.load(f)
                 except:
                     self.shortforms = {}

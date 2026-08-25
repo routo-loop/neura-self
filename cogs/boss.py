@@ -5,17 +5,11 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with NeuraSelf-UwU. If not, see <https://www.gnu.org/licenses/>.
-
 
 """
 Author: Routo
 NeuraSelf-UwU - https://github.com/routo-loop/neura-self
 """
-
-
 
 import discord
 from discord.ext import commands
@@ -28,6 +22,7 @@ import json
 import os
 import re
 
+
 class Boss(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -35,7 +30,7 @@ class Boss(commands.Cog):
         self._load_state()
         self.enabled = self.bot.config.get("boss", {}).get("enabled", True)
         self.join_chance = self.bot.config.get("boss", {}).get("join_chance", 100)
-        self.join_all = self.bot.config.get("boss", {}).get("join_all_guilds", True)
+        self.target_guilds = [str(g) for g in self.bot.config.get("boss", {}).get("target_guilds", [])]
         self.ignore_guilds = [str(g) for g in self.bot.config.get("boss", {}).get("ignore_guilds", [])]
         self.playing_guild_ids = set()
         self._update_playing_guilds()
@@ -43,21 +38,28 @@ class Boss(commands.Cog):
     def _update_playing_guilds(self):
         self.playing_guild_ids.clear()
         for c_id in self.bot.channels:
-            ch = self.bot.get_channel(int(c_id))
+            try:
+                ch = self.bot.get_channel(int(c_id))
+            except (TypeError, ValueError):
+                ch = None
             if ch and ch.guild:
                 self.playing_guild_ids.add(str(ch.guild.id))
-        
-        if hasattr(self.bot, 'guild_id') and self.bot.guild_id:
+
+        if hasattr(self.bot, "guild_id") and self.bot.guild_id:
             self.playing_guild_ids.add(str(self.bot.guild_id))
 
     async def register_actions(self):
         cfg = self.bot.config.get("boss", {})
         self.enabled = cfg.get("enabled", True)
         self.join_chance = cfg.get("join_chance", 100)
-        self.join_all = cfg.get("join_all_guilds", True)
-        self.ignore_guilds = [str(g) for g in cfg.get("ignore_guilds", [])]
+        self.target_guilds = [str(g) for g in cfg.get("target_guilds", []) if str(g).strip()]
+        self.ignore_guilds = [str(g) for g in cfg.get("ignore_guilds", []) if str(g).strip()]
         self._update_playing_guilds()
-        self.bot.log("SYS", f"Boss Battle settings refreshed. Tracking {len(self.playing_guild_ids)} guilds.")
+        self.bot.log(
+            "SYS",
+            f"Boss settings refreshed: enabled={self.enabled}, targets={len(self.target_guilds)}, "
+            f"ignored={len(self.ignore_guilds)}, chance={self.join_chance}%"
+        )
 
     def _load_state(self):
         self.tickets = 3
@@ -70,25 +72,29 @@ class Boss(commands.Cog):
                     self.tickets = data.get("tickets", 3)
                     self.last_reset = data.get("last_reset", 0)
                     self.joined_ids = set(data.get("joined_ids", []))
-            except: pass
+            except Exception as e:
+                self.bot.log("ERROR", f"Boss state load failed: {e}")
 
     def _save_state(self):
         try:
+            os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
             with open(self.state_file, "w") as f:
                 json.dump({
                     "tickets": self.tickets,
                     "last_reset": self.last_reset,
                     "joined_ids": list(self.joined_ids)
                 }, f)
-        except: pass
+        except Exception as e:
+            self.bot.log("ERROR", f"Boss state save failed: {e}")
 
     def _check_reset(self):
         now = time.time()
-        if now - self.last_reset > 72000: 
+        if now - self.last_reset > 72000:
             self.tickets = 3
             self.last_reset = now
             self.joined_ids.clear()
             self._save_state()
+            self.bot.log("BOSS", "Boss ticket state reset to 3/3.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -112,111 +118,162 @@ class Boss(commands.Cog):
             self.tickets = 0
             self.last_reset = time.time()
             sync_happened = True
-            
+
         if sync_happened:
             self.bot.log("BOSS", f"Synced tickets with OwO: {self.tickets}/3")
             self._save_state()
 
     @commands.Cog.listener()
     async def on_socket_raw_receive(self, msg):
-        if not self.enabled or self.bot.paused:
+        if not self.enabled:
             return
-
+        if self.bot.paused:
+            return
         if isinstance(msg, bytes):
             return
 
         try:
             raw_data = json.loads(msg)
-        except:
+        except Exception:
             return
 
         if raw_data.get("t") != "MESSAGE_CREATE":
             return
 
         data = raw_data.get("d", {})
-        if str(data.get("author", {}).get("id")) != self.bot.owo_bot_id:
+        author_id = str(data.get("author", {}).get("id") or "")
+        if author_id != str(self.bot.owo_bot_id):
+            return
+
+        message_id = str(data.get("id") or "")
+        channel_id_raw = data.get("channel_id")
+        guild_id = str(data.get("guild_id") or "")
+        if not channel_id_raw:
+            self.bot.log("BOSS", f"SKIP message={message_id}: missing channel_id")
+            return
+
+        try:
+            channel_id = int(channel_id_raw)
+        except (TypeError, ValueError):
+            self.bot.log("BOSS", f"SKIP message={message_id}: invalid channel_id={channel_id_raw!r}")
             return
 
         components = parse_v2_message(data)
+        content = (data.get("content") or "").lower()
+        v2_text = " ".join(
+            c.content for c in components if c.name == "text_display" and c.content
+        ).lower()
+        full_text = f"{content} {v2_text}"
+        is_spawn = "runs away" in full_text or "guild boss" in full_text
+        fight_buttons = [
+            c for c in components
+            if c.name == "button" and c.custom_id
+        ]
+        fight_btn = next((c for c in fight_buttons if c.custom_id == "guildboss_fight"), None)
+
+        # Only emit detailed diagnostics for messages that look Boss-related.
+        # This keeps the terminal useful while still exposing why a Boss was missed.
+        if is_spawn or fight_btn:
+            button_ids = [str(c.custom_id) for c in fight_buttons]
+            self.bot.log(
+                "BOSS",
+                f"DETECT message={message_id} guild={guild_id or '-'} channel={channel_id} "
+                f"components={len(components)} buttons={button_ids} "
+                f"spawn={is_spawn} fight_button={'YES' if fight_btn else 'NO'}"
+            )
+
         if not components:
+            if is_spawn:
+                self.bot.log("BOSS", f"SKIP message={message_id}: Boss-like message has no parseable components")
             return
 
-        content = (data.get("content") or "").lower()
-        v2_text = " ".join([c.content for c in components if c.name == "text_display"]).lower()
-        full_text = f"{content} {v2_text}"
-        
-        is_spawn = "runs away" in full_text or "guild boss" in full_text
-        fight_btn = next((c for c in components if c.custom_id == "guildboss_fight"), None)
-        
         if not is_spawn and not fight_btn:
             if "already joined" in v2_text:
-                pass 
+                self.bot.log("BOSS", f"SKIP message={message_id}: already joined")
             return
 
-        channel_id = int(data.get("channel_id"))
-        guild_id = str(data.get("guild_id") or "")
-
-
-        if guild_id in [str(g) for g in self.ignore_guilds]:
+        # Blacklist always wins.
+        if guild_id in self.ignore_guilds:
+            self.bot.log("BOSS", f"SKIP message={message_id}: guild {guild_id} is ignored")
             return
-        can_join = False
-        if self.join_all:
-            can_join = True
-        else:
-            configured_channels = [str(c) for c in self.bot.channels]
-            if str(channel_id) in configured_channels or str(channel_id) == str(self.bot.channel_id):
-                can_join = True
-            elif guild_id in self.playing_guild_ids:
-                can_join = True
-                self.bot.log("BOSS", f"Server-wide detected: Boss in non-playing channel ({channel_id}) of playing guild ({guild_id}).")
 
-        if not can_join:
+        # Only explicitly targeted guilds are eligible.
+        if guild_id not in self.target_guilds:
+            self.bot.log(
+                "BOSS",
+                f"SKIP message={message_id}: guild {guild_id} is not targeted "
+                f"(targets={','.join(self.target_guilds) or 'none'})"
+            )
             return
 
         if not fight_btn:
+            self.bot.log(
+                "BOSS",
+                f"SKIP message={message_id}: Boss detected in targeted guild but "
+                f"custom_id 'guildboss_fight' was not found"
+            )
             return
 
         battle_id = get_boss_battle_id(components)
         if battle_id and battle_id in self.joined_ids:
+            self.bot.log("BOSS", f"SKIP message={message_id}: battle {battle_id} already processed")
             return
 
-        tracking_id = battle_id or f"msg_{data.get('id')}"
+        tracking_id = battle_id or f"msg_{message_id}"
 
         self._check_reset()
         if self.tickets <= 0:
+            self.bot.log("BOSS", f"SKIP message={message_id}: no boss tickets left (0/3)")
             return
 
         if random.randint(1, 100) > self.join_chance:
-            self.bot.log("BOSS", "Boss spawned, but skipping due to join_chance.")
+            self.bot.log(
+                "BOSS",
+                f"SKIP message={message_id}: join_chance={self.join_chance}% rejected this spawn"
+            )
             self.joined_ids.add(tracking_id)
+            self._save_state()
             return
 
-        self.bot.log("BOSS", f"Boss Battle detected (ID: {tracking_id})! Attempting join...")
-        
-        await asyncio.sleep(random.uniform(0.5, 1.5))
-        
+        self.bot.log(
+            "BOSS",
+            f"JOIN attempt message={message_id} guild={guild_id} channel={channel_id} "
+            f"battle={tracking_id} ticket={self.tickets}/3 custom_id={fight_btn.custom_id}"
+        )
+
+        delay = random.uniform(0.5, 1.5)
+        await asyncio.sleep(delay)
+
         if self.bot.paused:
+            self.bot.log("BOSS", f"ABORT message={message_id}: bot paused during {delay:.2f}s delay")
             return
 
-        guild_id = data.get("guild_id")
-        
         success = await self.bot.interactions.click_button_raw(
             custom_id=fight_btn.custom_id,
-            message_id=data.get("id"),
+            message_id=message_id,
             channel_id=channel_id,
-            author_id=data.get("author", {}).get("id"),
+            author_id=author_id,
             guild_id=guild_id,
             flags=data.get("flags", 0)
         )
 
         if success:
             self.tickets = max(0, self.tickets - 1)
-            if tracking_id: self.joined_ids.add(tracking_id)
+            self.joined_ids.add(tracking_id)
             self._save_state()
-            self.bot.log("SUCCESS", f"Joined Boss Battle! Tickets remaining: {self.tickets}")
+            self.bot.log(
+                "SUCCESS",
+                f"Joined Boss Battle! guild={guild_id} battle={tracking_id} tickets={self.tickets}/3"
+            )
         else:
-            self.bot.log("ERROR", "Failed to join Boss Battle.")
+            # Do not mark the battle as joined when the actual interaction failed.
+            # A later MESSAGE_CREATE/retry path can still attempt it.
+            self.bot.log(
+                "ERROR",
+                f"JOIN FAILED message={message_id} guild={guild_id} battle={tracking_id} "
+                f"custom_id={fight_btn.custom_id}"
+            )
+
 
 async def setup(bot):
     await bot.add_cog(Boss(bot))
-

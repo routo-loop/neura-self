@@ -98,11 +98,11 @@ async def main():
             console.print("\n[yellow]Shutting down. See you next time![/yellow]")
             sys.exit(0)
         try:
-            acc_path = os.path.join(state.CONFIG_DIR, 'accounts.json')
-            with open(acc_path, 'r') as f:
-                acc_data = json.load(f)
-                accounts = [a for a in acc_data.get('accounts', []) if a.get('enabled', True)]
-        except:
+            accounts = [
+                a for a in proxy_manager.load_accounts()
+                if a.get("enabled", True)
+            ]
+        except Exception:
             accounts = []
         if not accounts:
             console.print("[bold red]No active accounts? Add some in the Account Manager (Option 2).[/bold red]")

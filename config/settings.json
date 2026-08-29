@@ -1,50 +1,33 @@
 {
     "core": {
         "monitor_bot_id": "408785106942164992",
-        "prefix": "owo "
+        "prefix": "o"
     },
     "commands": {
         "owo": {
             "enabled": true,
-            "cooldown": [
-                10,
-                13
-            ]
+            "cooldown": [10, 13]
         },
         "hunt": {
             "enabled": true,
             "use_shortform": true,
-            "cooldown": [
-                15,
-                18
-            ]
+            "cooldown": [15, 18]
         },
         "battle": {
             "enabled": true,
             "use_shortform": true,
-            "cooldown": [
-                15,
-                18
-            ]
+            "cooldown": [15, 18]
         },
         "curse": {
             "enabled": false,
-            "cooldown": [
-                310,
-                400
-            ],
+            "cooldown": [310, 400],
             "ping": true,
-            "targets": [
-                "put-curse-target-id-here"
-            ]
+            "targets": ["put-curse-target-id-here"]
         },
         "pray": {
             "enabled": true,
-            "cooldown": [
-                310,
-                400
-            ],
-            "ping": true,
+            "cooldown": [310, 400],
+            "ping": false,
             "targets": ""
         },
         "cookie": {
@@ -86,19 +69,14 @@
         },
         "gems": {
             "enabled": true,
-            "interval": [
-                15,
-                20
-            ],
-            "order": {
-                "lowestToHighest": false
-            },
+            "interval": [15, 20],
+            "order": {"lowestToHighest": true},
             "tiers": {
                 "common": true,
                 "epic": true,
                 "fabled": false,
                 "legendary": false,
-                "mythical": true,
+                "mythical": false,
                 "rare": true,
                 "uncommon": true
             },
@@ -108,7 +86,7 @@
                 "luckyGem": true,
                 "specialGem": false
             },
-            "use_gems_set": false
+            "use_gems_set": true
         },
         "giveaway": {
             "enabled": true,
@@ -122,9 +100,9 @@
         "huntbot": {
             "enabled": true,
             "use_shortform": true,
-            "cash_to_spend": 3000,
+            "cash_to_spend": 30000,
             "upgrade": {
-                "enabled": true,
+                "enabled": false,
                 "priorities": {
                     "efficiency": 4,
                     "duration": 2,
@@ -137,14 +115,8 @@
         },
         "open": {
             "enabled": false,
-            "crate": {
-                "enabled": false,
-                "type": "all"
-            },
-            "lootbox": {
-                "enabled": false,
-                "type": "all"
-            }
+            "crate": {"enabled": false, "type": "all"},
+            "lootbox": {"enabled": false, "type": "all"}
         },
         "quest": {
             "enabled": true,
@@ -154,11 +126,7 @@
         },
         "rpp": {
             "enabled": true,
-            "active_commands": [
-                "run",
-                "pup",
-                "piku"
-            ],
+            "active_commands": ["run", "pup", "piku"],
             "interval_s": 60
         },
         "shop": {
@@ -182,16 +150,13 @@
         },
         "human_break": {
             "enabled": true,
-            "duration_min": 14,
+            "duration_min": 1,
             "interval_min": 45
         }
     },
     "reactionBot": {
         "enabled": false,
-        "cooldown": [
-            0.5,
-            1
-        ],
+        "cooldown": [0.5, 1],
         "hunt_and_battle": false,
         "owo": false,
         "pray_and_curse": false
@@ -199,35 +164,24 @@
     "security": {
         "enabled": true,
         "captcha_solver": {
-            "enabled": false,
-            "service": "yescaptcha",
+            "enabled": true,
+            "tiered": true,
+            "tier_retries": 3,
+            "service": "tiered",
             "yescaptcha_api_key": "",
             "nopecha_api_key": "",
+            "captchaly_api_key": "",
             "anticaptcha_api_key": ""
         },
         "open_captcha_url_on_pc": true,
         "open_captcha_url_on_mobile": false,
         "notifications": {
-            "desktop": {
-                "enabled": true,
-                "sound": true,
-                "title": "Neura Security Alert"
-            },
+            "desktop": {"enabled": true, "sound": true, "title": "Neura Security Alert"},
             "mobile": {
                 "enabled": true,
-                "toast": {
-                    "enabled": true,
-                    "bg_color": "#000000",
-                    "position": "middle",
-                    "text_color": "#ffffff"
-                },
-                "tts": {
-                    "enabled": false
-                },
-                "vibrate": {
-                    "enabled": true,
-                    "time": 2
-                }
+                "toast": {"enabled": true, "bg_color": "#000000", "position": "middle", "text_color": "#ffffff"},
+                "tts": {"enabled": false},
+                "vibrate": {"enabled": true, "time": 2}
             }
         },
         "webhook": {
@@ -237,27 +191,32 @@
     },
     "boss": {
         "enabled": true,
+        "target_guilds": [],
         "ignore_guilds": [],
-        "join_all_guilds": false,
         "join_chance": 100
     },
     "level_grind": {
         "enabled": false,
-        "cooldown": [
-            60,
-            90
-        ],
+        "cooldown": [60, 90],
         "max_length": 100,
         "min_length": 10
     },
     "utilities": {
         "autochannel": {
             "enabled": true,
-            "cooldown": [
-                500,
-                650
-            ]
+            "cooldown": [500, 650]
         }
+    },
+    "conversation": {
+        "enabled": true,
+        "gemini_api_key": "",
+        "respond_chance": 75,
+        "user_cooldown": 45,
+        "max_history": 6,
+        "detect_threats": true,
+        "caution_duration_sec": 180,
+        "play_game_on_threat": true,
+        "model": "gemini-3-flash-preview"
     },
     "gambling": {
         "min_balance": 40000,

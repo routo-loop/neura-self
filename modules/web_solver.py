@@ -13,6 +13,15 @@
 """
 Author: Routo
 NeuraSelf-UwU - https://github.com/routo-loop/neura-self
+
+WebSolver - handles hCaptcha solving and the manual-solve queue.
+
+Supports both:
+  - Single-service mode (legacy `service` key), and
+  - Tiered mode (set "tiered": true): automatically activates
+    Nopecha -> YesCaptcha -> Captchaly -> AntiCaptcha based on which
+    API keys are present. Nopecha always tried first. Each tier tries
+    3 times before falling through. Balance gating enabled.
 """
 
 
@@ -31,6 +40,7 @@ from modules.services.yescaptcha import YesCaptchaService
 from modules.services.nopecha import NopeCaptchaService
 from modules.services.anticaptcha import AntiCaptchaService
 from modules.services.captchaly import CaptchalyService
+from modules.tiered_solver import TieredCaptchaSolver
 
 class WebSolver:
     _manual_lock = asyncio.Lock()
@@ -42,6 +52,8 @@ class WebSolver:
         self.bot = bot
         self.site_key = "a6a1d5ce-612d-472d-8e37-7601408fbc09"
         self.auth_url = "https://discord.com/api/v9/oauth2/authorize?client_id=408785106942164992&response_type=code&redirect_uri=https://owobot.com/api/auth/discord/redirect&scope=identify guilds"
+        self.tiered = False
+        self.tiered_solver = None
         self._reload_service()
 
     def _reload_service(self):
@@ -50,6 +62,12 @@ class WebSolver:
         self.active_service_name = cfg.get('service', 'yescaptcha').lower()
         self.enabled = cfg.get('enabled', True)
         self.browser_cfg = cfg.get('browser_config', {})
+        self.tiered = bool(cfg.get('tiered', False))
+
+        if self.tiered:
+            self.tiered_solver = self.tiered_solver or TieredCaptchaSolver(self.bot)
+            self.tiered_solver.reload()
+            return
 
         if self.active_service_name == 'nopecha':
             self.active_key = cfg.get('nopecha_api_key', self.api_key)
@@ -66,31 +84,41 @@ class WebSolver:
 
     async def get_balance(self):
         self._reload_service()
+        if self.tiered:
+            return await self.tiered_solver.get_balance()
         return await self.service.get_balance()
 
     async def solve_hcaptcha(self, retries=3):
         self._reload_service()
+        if self.tiered:
+            return await self.tiered_solver.solve_hcaptcha(retries)
         return await self.service.solve_hcaptcha(retries)
 
     async def auto_verify(self, tries=3):
         self._reload_service()
-        if not self.active_key and self.active_service_name != 'nopecha':
-            self.bot.log("ERROR", f"{self.active_service_name.capitalize()} API key missing in settings.")
-            return False
 
-        balance = await self.get_balance()
-        if self.active_service_name == 'yescaptcha' and balance < 30:
-            self.bot.log("ERROR", f"YesCaptcha balance too low: {balance}")
-            return False
-        elif self.active_service_name == 'nopecha' and balance < 1:
-            self.bot.log("ERROR", f"NopeCHA balance too low: {balance}")
-            return False
-        elif self.active_service_name == 'anticaptcha' and balance < 0.5:
-            self.bot.log("ERROR", f"AntiCaptcha balance too low: {balance}")
-            return False
-        elif self.active_service_name == 'captchaly' and balance < 0.005:
-            self.bot.log("ERROR", f"Captchaly balance too low: {balance}")
-            return False
+        if self.tiered:
+            if not self.tiered_solver.active_tiers:
+                self.bot.log("ERROR", "No captcha API keys found in settings. Tier system inactive.")
+                return False
+        else:
+            if not self.active_key and self.active_service_name != 'nopecha':
+                self.bot.log("ERROR", f"{self.active_service_name.capitalize()} API key missing in settings.")
+                return False
+
+            balance = await self.get_balance()
+            if self.active_service_name == 'yescaptcha' and balance < 30:
+                self.bot.log("ERROR", f"YesCaptcha balance too low: {balance}")
+                return False
+            elif self.active_service_name == 'nopecha' and balance < 1:
+                self.bot.log("ERROR", f"NopeCHA balance too low: {balance}")
+                return False
+            elif self.active_service_name == 'anticaptcha' and balance < 0.5:
+                self.bot.log("ERROR", f"AntiCaptcha balance too low: {balance}")
+                return False
+            elif self.active_service_name == 'captchaly' and balance < 0.005:
+                self.bot.log("ERROR", f"Captchaly balance too low: {balance}")
+                return False
 
         headers = {
             "Authorization": self.bot.token,

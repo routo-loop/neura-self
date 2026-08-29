@@ -69,13 +69,61 @@ def save_proxies(proxies):
 
 
 def load_accounts():
-    if not os.path.exists(ACCOUNTS_FILE):
-        return []
-    try:
-        with open(ACCOUNTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f).get("accounts", [])
-    except (json.JSONDecodeError, OSError):
-        return []
+    accounts = []
+
+    # Đọc accounts.json nếu có
+    if os.path.exists(ACCOUNTS_FILE):
+        try:
+            with open(ACCOUNTS_FILE, "r", encoding="utf-8") as f:
+                accounts = json.load(f).get("accounts", [])
+        except (json.JSONDecodeError, OSError):
+            accounts = []
+
+    # Nếu file có account thì dùng như cũ
+    if accounts:
+        return accounts
+
+    # ============================
+    # Không có account -> đọc ENV
+    # ============================
+
+    env_accounts = []
+    index = 1
+
+    while True:
+        token = os.getenv(f"ACCOUNT{index}_TOKEN")
+
+        # Không còn token thì dừng
+        if not token:
+            break
+
+        account = {
+            "name": os.getenv(f"ACCOUNT{index}_NAME", f"Account {index}"),
+            "token": token,
+            "channels": [],
+            "enabled": True,
+            "proxy_id": None,
+            "token_masked": ""
+        }
+
+        channels = os.getenv(f"ACCOUNT{index}_CHANNELS", "")
+
+        if channels:
+            account["channels"] = [
+                c.strip()
+                for c in channels.split(",")
+                if c.strip()
+            ]
+
+        proxy = os.getenv(f"ACCOUNT{index}_PROXY")
+
+        if proxy:
+            account["proxy_id"] = proxy
+
+        env_accounts.append(account)
+        index += 1
+
+    return env_accounts
 
 
 def save_accounts(accounts):

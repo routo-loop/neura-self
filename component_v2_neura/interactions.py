@@ -5,18 +5,11 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
-# You should have received a copy of the GNU General Public License
-# along with NeuraSelf-UwU. If not, see <https://www.gnu.org/licenses/>.
-
 
 """
 Author: Routo
 NeuraSelf-UwU - https://github.com/routo-loop/neura-self
 """
-
-
-
 
 import aiohttp
 import json
@@ -27,16 +20,18 @@ import re
 import random
 from datetime import datetime
 
-class InteractionManager:
 
+class InteractionManager:
     def __init__(self, bot):
         self.bot = bot
-        self._build_number = 310000 
+        self._build_number = 310000
         self._last_fetch = 0
         self._installation_id = str(uuid.uuid4()).replace('-', '')[:32]
-        
         self.chrome_version = f"{random.randint(124, 127)}.0.0.0"
-        self.user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.chrome_version} Safari/537.36"
+        self.user_agent = (
+            f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            f"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.chrome_version} Safari/537.36"
+        )
 
     async def _fetch_build_number(self):
         now = time.time()
@@ -51,17 +46,17 @@ class InteractionManager:
                 match = re.search(r"assets/(sentry\.\w+)\.js", text)
                 if not match:
                     match = re.search(r"assets/(\d+\.\w+)\.js", text)
-                
+
                 if match:
                     url = f"https://static.discord.com/assets/{match.group(1)}.js"
                     async with session.get(url, timeout=10) as resp:
                         js = await resp.text()
-                    
+
                     b_match = re.search(r'buildNumber\D+(\d+)"', js)
                     if b_match:
                         self._build_number = int(b_match.group(1))
                         self._last_fetch = now
-        except Exception as e:
+        except Exception:
             pass
         return self._build_number
 
@@ -94,7 +89,7 @@ class InteractionManager:
         bn = await self._fetch_build_number()
         sp = self._generate_super_properties(bn)
         tz = datetime.now().astimezone().tzname() or "UTC"
-        
+
         referer = "https://discord.com/channels/@me"
         if guild_id and channel_id:
             referer = f"https://discord.com/channels/{guild_id}/{channel_id}"
@@ -126,7 +121,7 @@ class InteractionManager:
     async def click_button(self, custom_id, message, guild_id=None):
         if not custom_id or not message:
             return False
-            
+
         return await self.click_button_raw(
             custom_id=custom_id,
             message_id=message.id,
@@ -138,6 +133,7 @@ class InteractionManager:
 
     async def click_button_raw(self, custom_id, message_id, channel_id, author_id, guild_id=None, flags=0):
         if not custom_id:
+            self.bot.log("ERROR", "Interaction rejected locally: empty custom_id")
             return False
 
         payload = {
@@ -155,7 +151,7 @@ class InteractionManager:
         }
 
         headers = await self._get_headers(channel_id=channel_id, guild_id=guild_id)
-        
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -164,14 +160,32 @@ class InteractionManager:
                     headers=headers
                 ) as resp:
                     if resp.status == 204:
+                        self.bot.log(
+                            "INTERACTION",
+                            f"Button accepted: custom_id={custom_id} message={message_id} "
+                            f"channel={channel_id} guild={guild_id or '-'}"
+                        )
                         return True
-                    else:
-                        error_text = await resp.text()
-                        self.bot.log("ERROR", f"Interaction failed ({resp.status}): {error_text}")
-                        return False
+
+                    error_text = await resp.text()
+                    # Keep enough response context to diagnose stale buttons, invalid payloads,
+                    # authentication/session issues, or Discord-side rejection.
+                    compact_error = error_text.replace("\n", " ")[:1000]
+                    self.bot.log(
+                        "ERROR",
+                        f"Interaction failed HTTP {resp.status}: custom_id={custom_id} "
+                        f"message={message_id} channel={channel_id} guild={guild_id or '-'} "
+                        f"response={compact_error}"
+                    )
+                    return False
         except Exception as e:
-            self.bot.log("ERROR", f"Interaction error: {e}")
+            self.bot.log(
+                "ERROR",
+                f"Interaction exception: custom_id={custom_id} message={message_id} "
+                f"channel={channel_id} guild={guild_id or '-'} error={e}"
+            )
             return False
+
 
 def setup_interactions(bot):
     return InteractionManager(bot)

@@ -18,295 +18,324 @@
 /* Send OWOCash — uses the existing design tokens: --primary, --success,
    --warning, --danger, --border, --text-muted, --font-heading/--font-mono. */
 
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* Action button on the selected account card */
 .send-cash-open-btn {
-    width: 100%;
-    margin-top: 16px;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, rgba(255,62,62,0.16), rgba(255,62,62,0.06));
-    border: 1px solid rgba(255,62,62,0.45);
-    border-radius: 10px;
-    color: var(--primary);
-    font-family: var(--font-heading);
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 62, 62, 0.16),
+    rgba(255, 62, 62, 0.06)
+  );
+  border: 1px solid rgba(255, 62, 62, 0.45);
+  border-radius: 10px;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .send-cash-open-btn:hover {
-    background: var(--primary);
-    color: #fff;
-    box-shadow: 0 0 18px rgba(255,62,62,0.35);
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(255, 62, 62, 0.35);
 }
-.send-cash-open-btn .icon-svg { width: 16px; height: 16px; }
+.send-cash-open-btn .icon-svg {
+  width: 16px;
+  height: 16px;
+}
 
 /* Modal — slightly wider than the default proxy modal */
 .send-cash-modal-inner {
-    width: min(580px, 94vw);
+  width: min(580px, 94vw);
 }
 
 /* Destination block */
 .send-cash-destination {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 4px;
 }
 .send-cash-destination-name {
-    font-family: var(--font-heading);
-    font-size: 0.95rem;
-    color: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: #fff;
 }
 .send-cash-destination-id {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .send-cash-badge {
-    flex-shrink: 0;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #fff;
-    background: var(--primary);
-    padding: 3px 9px;
-    border-radius: 8px;
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--primary);
+  padding: 3px 9px;
+  border-radius: 8px;
 }
 
 /* Amount input */
 .send-cash-amount-input {
-    font-size: 1.1rem;
-    letter-spacing: 0.04em;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
 }
 
 /* Inline validation */
 .send-cash-error {
-    color: var(--danger);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    margin-top: 6px;
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  margin-top: 6px;
 }
 
 /* Accounts list */
 .send-cash-accounts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 260px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.18);
 }
 .send-cash-account-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: border-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: border-color 0.15s;
 }
 .send-cash-account-row.destination {
-    border-color: rgba(255, 62, 62, 0.55);
-    background: rgba(255, 62, 62, 0.08);
+  border-color: rgba(255, 62, 62, 0.55);
+  background: rgba(255, 62, 62, 0.08);
 }
 .send-cash-account-row.eligible {
-    border-color: rgba(0, 255, 136, 0.35);
+  border-color: rgba(0, 255, 136, 0.35);
 }
 .send-cash-account-row.insufficient {
-    border-color: rgba(255, 77, 77, 0.4);
+  border-color: rgba(255, 77, 77, 0.4);
 }
 .send-cash-account-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .send-cash-account-username {
-    color: #eee;
-    font-size: 0.9rem;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  color: #eee;
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .send-cash-account-balance {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 .send-cash-eligible-tag {
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 2px 7px;
-    border-radius: 20px;
-    color: var(--success);
-    background: rgba(0, 255, 136, 0.12);
-    border: 1px solid rgba(0, 255, 136, 0.3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  color: var(--success);
+  background: rgba(0, 255, 136, 0.12);
+  border: 1px solid rgba(0, 255, 136, 0.3);
 }
 .send-cash-insufficient-tag {
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 2px 7px;
-    border-radius: 20px;
-    color: var(--danger);
-    background: rgba(255, 77, 77, 0.12);
-    border: 1px solid rgba(255, 77, 77, 0.3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  color: var(--danger);
+  background: rgba(255, 77, 77, 0.12);
+  border: 1px solid rgba(255, 77, 77, 0.3);
 }
 
 /* Summary line */
 .send-cash-summary {
-    margin-top: 10px;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    line-height: 1.5;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 /* Progress (sending in progress) */
 .send-cash-busy {
-    padding: 18px 0 6px;
+  padding: 18px 0 6px;
 }
 .send-cash-progress-track {
-    height: 8px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border);
-    overflow: hidden;
+  height: 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  overflow: hidden;
 }
 .send-cash-progress-bar {
-    height: 100%;
-    width: 0%;
-    border-radius: 20px;
-    background: linear-gradient(90deg, var(--primary), #ff7a18);
-    box-shadow: 0 0 12px rgba(255, 62, 62, 0.5);
-    transition: width 0.4s ease;
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--primary), #ff7a18);
+  box-shadow: 0 0 12px rgba(255, 62, 62, 0.5);
+  transition: width 0.4s ease;
 }
 .send-cash-progress-label {
-    margin-top: 10px;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 
 /* Results */
 .send-cash-results-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-    margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
 }
 .send-cash-results-summary div {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 0.85rem;
-    color: #ddd;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #ddd;
 }
-.send-cash-results-summary b { color: #fff; }
+.send-cash-results-summary b {
+  color: #fff;
+}
 .send-cash-result-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 240px;
-    overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
 }
 .send-cash-result-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.85rem;
 }
-.send-cash-result-name { color: #eee; }
-.send-cash-result-status { font-family: var(--font-mono); font-size: 0.78rem; }
+.send-cash-result-name {
+  color: #eee;
+}
+.send-cash-result-status {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
 .send-cash-result-reason {
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    font-family: var(--font-body);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-family: var(--font-body);
 }
-.send-cash-result-ok .send-cash-result-status { color: var(--success); }
-.send-cash-result-fail .send-cash-result-status { color: var(--danger); }
-.send-cash-result-skip .send-cash-result-status { color: var(--warning); }
+.send-cash-result-ok .send-cash-result-status {
+  color: var(--success);
+}
+.send-cash-result-fail .send-cash-result-status {
+  color: var(--danger);
+}
+.send-cash-result-skip .send-cash-result-status {
+  color: var(--warning);
+}
 
 /* Insufficient confirmation modal */
 .send-cash-confirm-intro {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 10px;
 }
 .send-cash-confirm-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 180px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.18);
 }
 .send-cash-confirm-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: rgba(255, 77, 77, 0.07);
-    border: 1px solid rgba(255, 77, 77, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 77, 77, 0.07);
+  border: 1px solid rgba(255, 77, 77, 0.25);
 }
-.send-cash-confirm-name { color: #f1f5f9; font-size: 0.88rem; }
-.send-cash-confirm-balance { font-family: var(--font-mono); font-size: 0.78rem; color: var(--danger); }
+.send-cash-confirm-name {
+  color: #f1f5f9;
+  font-size: 0.88rem;
+}
+.send-cash-confirm-balance {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--danger);
+}
 .send-cash-confirm-text {
-    font-size: 0.86rem;
-    color: #ddd;
-    margin-top: 12px;
-    line-height: 1.5;
+  font-size: 0.86rem;
+  color: #ddd;
+  margin-top: 12px;
+  line-height: 1.5;
 }
 .send-cash-confirm-skip-count {
-    font-size: 0.82rem;
-    color: var(--warning);
-    margin-top: 8px;
-    font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--warning);
+  margin-top: 8px;
+  font-family: var(--font-mono);
 }
 .send-cash-confirm-proceed-count {
-    font-size: 0.82rem;
-    color: var(--success);
-    margin-top: 4px;
-    font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--success);
+  margin-top: 4px;
+  font-family: var(--font-mono);
 }
 .send-cash-all-failed {
-    color: var(--danger);
-    font-weight: 600;
-    font-size: 0.88rem;
-    margin-bottom: 12px;
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 12px;
 }

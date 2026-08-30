@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="/static/css/pages/proxies.css?v=2.4.0.1">
     <link rel="stylesheet" href="/static/css/pages/security.css?v=2.4.0.1">
     <link rel="stylesheet" href="/static/css/pages/history.css?v=2.4.0.1">
+    <link rel="stylesheet" href="/static/css/pages/send-cash.css?v=2.4.0.1">
     <link rel="stylesheet" href="/static/css/responsive.css?v=2.4.0.1">
 </head>
 
@@ -324,7 +325,10 @@
                         style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;">
                     </div>
                 </div>
-                <div class="top-controls" style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+                <div class="top-controls" style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end; flex-wrap:wrap;">
+                    <button class="btn-control" onclick="openSendCashModal(currentAccountId)"><span class="icon-svg"
+                            style="--icon: url('/static/assets/neura_icons/money.svg');"></span> <span
+                            class="btn-text">Send OWOCash to this account</span></button>
                     <button class="btn-control gold" onclick="action('cash', this)"><span class="icon-svg"
                             style="--icon: url('/static/assets/neura_icons/coins.svg');"></span> <span
                             class="btn-text">CHECK CASH</span></button>
@@ -515,6 +519,56 @@
         </main>
     </div>
 
+    <div id="send-cash-modal" class="proxy-modal">
+        <div class="proxy-modal-inner send-cash-modal-inner">
+            <h3>Send OWOCash</h3>
+            <div id="send-cash-view">
+                <label class="form-label">Destination</label>
+                <div class="send-cash-destination">
+                    <span id="send-cash-destination-name" class="send-cash-destination-name"></span>
+                    <span id="send-cash-destination-id" class="send-cash-destination-id"></span>
+                    <span class="send-cash-badge">Destination</span>
+                </div>
+                <label class="form-label">Cash Amount</label>
+                <input type="text" inputmode="numeric" id="send-cash-amount" class="cfg-input send-cash-amount-input"
+                    placeholder="e.g. 100" autocomplete="off" spellcheck="false"
+                    oninput="onSendCashAmountInput()">
+                <div id="send-cash-amount-error" class="send-cash-error" hidden></div>
+                <label class="form-label">Accounts</label>
+                <div id="send-cash-accounts" class="send-cash-accounts-list"></div>
+                <div id="send-cash-summary" class="send-cash-summary"></div>
+            </div>
+            <div id="send-cash-busy" class="send-cash-busy hidden">
+                <div class="send-cash-progress-track">
+                    <div id="send-cash-progress-bar" class="send-cash-progress-bar"></div>
+                </div>
+                <div id="send-cash-progress-label" class="send-cash-progress-label">Processing…</div>
+            </div>
+            <div id="send-cash-results" class="send-cash-results hidden">
+                <div id="send-cash-results-text"></div>
+            </div>
+            <div class="proxy-modal-actions">
+                <button class="btn-control" onclick="closeSendCashResults()" id="send-cash-cancel-btn">Cancel</button>
+                <button class="btn-control green" onclick="submitSendCash()" id="send-cash-send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="send-cash-confirm-modal" class="proxy-modal">
+        <div class="proxy-modal-inner send-cash-modal-inner">
+            <h3>Insufficient OWOCash</h3>
+            <p class="send-cash-confirm-intro">The following accounts do not have enough OWOCash:</p>
+            <div id="send-cash-confirm-list" class="send-cash-confirm-list"></div>
+            <div id="send-cash-confirm-text" class="send-cash-confirm-text"></div>
+            <div id="send-cash-confirm-skip-count" class="send-cash-confirm-skip-count"></div>
+            <div id="send-cash-confirm-proceed-count" class="send-cash-confirm-proceed-count"></div>
+            <div class="proxy-modal-actions">
+                <button class="btn-control" onclick="cancelSendCashContinue()">Cancel</button>
+                <button class="btn-control green" onclick="continueSendCash()">Continue Without Insufficient Accounts</button>
+            </div>
+        </div>
+    </div>
+
     <div class="mobile-control-panel" id="mobileControls">
         <button class="mobile-btn green" onclick="action('resume')" title="Start Bot">
             <span class="icon-svg" style="--icon: url('/static/assets/neura_icons/play.svg');"></span>
@@ -530,6 +584,7 @@
     <script src="/static/js/core.js"></script>
     <script src="/static/js/navigation.js"></script>
     <script src="/static/js/accounts.js"></script>
+    <script src="/static/js/send_cash.js"></script>
     <script src="/static/js/proxies.js"></script>
     <script src="/static/js/security.js"></script>
     <script src="/static/js/config.js"></script>

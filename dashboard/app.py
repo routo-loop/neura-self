@@ -171,6 +171,7 @@ def account_list():
             'avatar': str(bot.user.display_avatar.url) if bot.user.display_avatar else None,
             'paused': bot.paused,
             'cash': st.get('current_cash', 0),
+            'cash_known': bool(st.get('last_cash_update')),
             'session_total': session_total,
             'gems_used': st.get('gems_used', 0)
         })
@@ -739,6 +740,87 @@ def bot_command():
     )
     state.log_command("CMD", f"Manual command sent: {command}", bot_name=bot.username)
     return jsonify({'success': True, 'message': f'Command sent: {command}'})
+
+
+@app.route('/api/send_owocash/preview', methods=['POST'])
+@login_required
+def send_owocash_preview():
+    """Validate one account's balances against a requested amount (server-side)."""
+    data = request.get_json(silent=True) or {}
+    destination_id = str(data.get('destination_id') or '')
+    amount = data.get('amount')
+
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'error': 'Please enter a valid whole number of OWOCash.'}), 400
+    if amount <= 0:
+        return jsonify({'success': False, 'error': 'Amount must be greater than zero.'}), 400
+
+    from cogs.send_cash import build_preview
+    preview = build_preview(destination_id, amount)
+    if not preview['destination']:
+        return jsonify({'success': False, 'error': 'Destination account not found.'}), 404
+
+    preview['success'] = True
+    return jsonify(preview)
+
+
+@app.route('/api/send_owocash', methods=['POST'])
+@login_required
+def send_owocash():
+    """Start a Send OWOCash operation for the requested eligible accounts."""
+    data = request.get_json(silent=True) or {}
+    destination_id = str(data.get('destination_id') or '')
+    amount = data.get('amount')
+    account_ids = data.get('account_ids')
+
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'error': 'Please enter a valid whole number of OWOCash.'}), 400
+    if amount <= 0:
+        return jsonify({'success': False, 'error': 'Amount must be greater than zero.'}), 400
+
+    dest = None
+    for b in state.bot_instances:
+        if b.user and str(b.user.id) == str(destination_id):
+            dest = b
+            break
+    if not dest:
+        return jsonify({'success': False, 'error': 'Destination account not found.'}), 404
+
+    if account_ids:
+        account_ids = [str(a) for a in account_ids]
+
+    from cogs.send_cash import start_send_operation
+    op = start_send_operation(
+        destination_id,
+        amount,
+        account_ids=account_ids,
+        destination_name=getattr(dest, 'username', str(destination_id)),
+    )
+
+    pending_count = sum(1 for r in op.get('results', {}).values() if r.get('status') == 'pending')
+    state.log_command(
+        "CMD",
+        f"Send OWOCash operation started: {amount} OWOCash to {op['destination_name']} ({pending_count} eligible).",
+        "success",
+        bot_name=op['destination_name'],
+        bot_id=op['destination_id'],
+    )
+    return jsonify({'success': op['status'] != 'failed', 'operation_id': op['id'], 'error': op.get('error')})
+
+
+@app.route('/api/send_owocash/status', methods=['GET'])
+@login_required
+def send_owocash_status():
+    op_id = request.args.get('op_id') or request.args.get('id')
+    op = state.send_cash_operations.get(str(op_id))
+    if not op:
+        return jsonify({'success': False, 'error': 'Operation not found.'}), 404
+    return jsonify({'success': True, 'operation': op})
+
 
 _pending_captchas = {}
 

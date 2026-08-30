@@ -47,6 +47,9 @@ STATS_FILE = os.path.join(DATA_DIR, 'stats.json')
 
 account_stats = {}
 
+# In-flight Send OWOCash operations, managed by cogs/send_cash.py.
+send_cash_operations = {}
+
 def get_empty_stats():
     return {
         'uptime_start': time.time(),

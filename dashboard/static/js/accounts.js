@@ -108,6 +108,10 @@ function renderAccountGrid() {
                         <div class="account-stat-lbl">Gems Used</div>
                     </div>
                 </div>
+                ${isSelected ? `<button type="button" class="send-cash-open-btn" onclick="event.stopPropagation(); window.openSendCashModal('${acc.id}')">
+                    <span class="icon-svg" style="--icon: url('/static/assets/neura_icons/money.svg');"></span>
+                    <span class="btn-text">Send OWOCash to this account</span>
+                </button>` : ''}
             </div>
         `;
     }).join('');
